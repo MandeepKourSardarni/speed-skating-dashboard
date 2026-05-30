@@ -1,0 +1,18 @@
+body {
+  background: #f4f6f9;
+  font-family: Arial;
+}
+
+h1 {
+  font-weight: bold;
+}
+
+table {
+  background: white;
+}
+
+canvas {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
