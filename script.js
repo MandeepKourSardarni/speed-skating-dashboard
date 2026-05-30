@@ -1,56 +1,77 @@
+
 let chart;
 
 async function loadData() {
 
-  const proxy =
-    "https://corsproxy.io/?";
-
-  const target =
+  // Ontario rankings page
+  const targetUrl =
     "https://results.ontariospeedskating.ca/rank";
+
+  // Free CORS proxy
+  const proxyUrl =
+    "https://api.allorigins.win/raw?url=";
 
   try {
 
-    const response =
-      await fetch(proxy + encodeURIComponent(target));
+    // Fetch page HTML
+    const response = await fetch(
+      proxyUrl + encodeURIComponent(targetUrl)
+    );
 
-    const html =
-      await response.text();
+    // Convert to text
+    const html = await response.text();
 
-    const parser =
-      new DOMParser();
+    console.log("HTML Loaded");
 
-    const doc =
-      parser.parseFromString(html, "text/html");
+    // Parse HTML
+    const parser = new DOMParser();
 
+    const doc = parser.parseFromString(
+      html,
+      "text/html"
+    );
+
+    console.log(doc);
+
+    // Find all rows
     const rows =
       doc.querySelectorAll("table tbody tr");
 
+    console.log("Rows Found:", rows.length);
+
+    // Get table body
     const tableBody =
       document.getElementById("tableBody");
 
+    // Clear previous data
     tableBody.innerHTML = "";
 
+    // Arrays for chart
     let labels = [];
     let times = [];
 
+    // Loop through first 10 rows
     rows.forEach((row, index) => {
 
-      if(index < 10) {
+      if (index < 10) {
 
-        const cols = row.querySelectorAll("td");
+        const cols =
+          row.querySelectorAll("td");
 
+        // Extract data safely
         const rank =
-          cols[0]?.innerText || "";
+          cols[0]?.innerText?.trim() || "";
 
         const name =
-          cols[1]?.innerText || "";
+          cols[1]?.innerText?.trim() || "";
 
         const club =
-          cols[2]?.innerText || "";
+          cols[2]?.innerText?.trim() || "";
 
         const bestTime =
-          cols[3]?.innerText || "";
+          cols[3]?.innerText?.trim() || "";
 
+        // Add row to dashboard table
         tableBody.innerHTML += `
           <tr>
             <td>${rank}</td>
@@ -60,21 +81,27 @@ async function loadData() {
           </tr>
         `;
 
+        // Add chart data
         labels.push(name);
 
-        times.push(
-          parseFloat(bestTime) || 0
-        );
+        // Convert time to number
+        const numericTime =
+          parseFloat(bestTime) || 0;
+
+        times.push(numericTime);
       }
     });
 
+    // Create chart
     createChart(labels, times);
 
-  } catch(error) {
+  } catch (error) {
 
-    alert("Could not load rankings");
+    console.error(error);
 
-    console.log(error);
+    alert(
+      "Could not load rankings. Press F12 and check Console."
+    );
   }
 }
 
@@ -83,10 +110,12 @@ function createChart(labels, data) {
   const ctx =
     document.getElementById("chart");
 
-  if(chart) {
+  // Destroy old chart if exists
+  if (chart) {
     chart.destroy();
   }
 
+  // Create new chart
   chart = new Chart(ctx, {
 
     type: "bar",
@@ -96,10 +125,23 @@ function createChart(labels, data) {
       labels: labels,
 
       datasets: [{
-        label: "Best Times",
+        label: "Best Time",
 
         data: data
       }]
+    },
+
+    options: {
+
+      responsive: true,
+
+      plugins: {
+
+        legend: {
+          display: true
+        }
+      }
     }
   });
 }
+
