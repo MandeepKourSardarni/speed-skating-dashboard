@@ -103,6 +103,7 @@ async function loadRankings() {
       age: state.age,
       gender: state.gender,
       track: state.track,
+      distance: state.distance,
       season: state.season,
     });
 
