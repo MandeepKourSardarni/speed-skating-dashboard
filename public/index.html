@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ontario Speed Skating · Analytics Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- html2canvas + jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOPBAR
+══════════════════════════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="20" cy="32" rx="16" ry="4" fill="currentColor" opacity="0.3"/>
+          <path d="M8 28 C8 20 14 10 20 6 C26 10 32 20 32 28" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <path d="M6 26 L34 26" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+          <circle cx="20" cy="6" r="3" fill="currentColor"/>
+          <path d="M14 22 L20 14 L26 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <path d="M6 30 C10 28 14 27 20 27 C26 27 30 28 34 30" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">OSS Analytics</div>
+        <div class="brand-sub">Ontario Speed Skating</div>
+      </div>
+    </div>
+
+    <nav class="topbar-nav">
+      <span class="live-badge">
+        <span class="live-dot"></span>
+        Live Data
+      </span>
+    </nav>
+
+    <div class="topbar-actions">
+      <button class="btn-icon" id="exportBtn" title="Export PDF" data-bs-toggle="tooltip">
+        <i class="bi bi-download"></i>
+      </button>
+      <button class="btn-icon" id="themeToggle" title="Toggle theme">
+        <i class="bi bi-moon-stars-fill"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     LAYOUT WRAPPER
+══════════════════════════════════════════════════════════════════ -->
+<div class="dashboard-layout">
+
+  <!-- ─── SIDEBAR ──────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Age Category</div>
+      <div class="filter-pills" id="ageFilter">
+        <button class="filter-pill" data-value="club-u8">Club U8</button>
+        <button class="filter-pill" data-value="pre-youth">Pre-Youth 9–10</button>
+        <button class="filter-pill active" data-value="youth">Youth 11–13</button>
+        <button class="filter-pill" data-value="junior">Junior 13–18</button>
+        <button class="filter-pill" data-value="senior">Senior 19–29</button>
+        <button class="filter-pill" data-value="masters">Masters 30+</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Gender</div>
+      <div class="filter-pills" id="genderFilter">
+        <button class="filter-pill active" data-value="male">
+          <i class="bi bi-gender-male"></i> Male
+        </button>
+        <button class="filter-pill" data-value="female">
+          <i class="bi bi-gender-female"></i> Female
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Track Size</div>
+      <div class="filter-pills">
+        <button class="filter-pill active" data-value="100m">100m Short Track</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Season</div>
+      <div class="filter-pills" id="seasonFilter">
+        <button class="filter-pill active" data-value="2025-2026">2025 – 2026</button>
+        <button class="filter-pill" data-value="2024-2025">2024 – 2025</button>
+      </div>
+    </div>
+
+    <button class="load-btn" id="loadBtn">
+      <i class="bi bi-lightning-fill"></i>
+      Load Rankings
+    </button>
+
+    <!-- Comparison Panel -->
+    <div class="sidebar-section comparison-panel" id="comparisonPanel" style="display:none">
+      <div class="sidebar-label">
+        Compare Athletes
+        <span class="badge-count" id="selectedCount">0</span>
+      </div>
+      <div id="selectedAthletes" class="selected-athletes"></div>
+      <button class="compare-btn" id="compareBtn" style="display:none">
+        <i class="bi bi-bar-chart-line-fill"></i>
+        View Comparison
+      </button>
+      <button class="compare-btn secondary" id="clearBtn" style="display:none">
+        <i class="bi bi-x-circle"></i>
+        Clear Selection
+      </button>
+    </div>
+
+    <!-- Saved Athletes -->
+    <div class="sidebar-section" id="favoritesPanel" style="display:none">
+      <div class="sidebar-label">
+        <i class="bi bi-star-fill text-warning"></i>
+        Saved Athletes
+      </div>
+      <div id="favoritesList"></div>
+    </div>
+
+  </aside>
+
+  <!-- ─── MAIN CONTENT ─────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Hero / Welcome State -->
+    <section class="hero-section" id="heroSection">
+      <div class="hero-inner">
+        <div class="hero-graphic">
+          <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="100" cy="100" rx="80" ry="15" fill="currentColor" opacity="0.1"/>
+            <path d="M40 90 C40 60 65 20 100 10 C135 20 160 60 160 90" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+            <path d="M20 80 L180 80" stroke="currentColor" stroke-width="1" opacity="0.2" stroke-dasharray="4 4"/>
+            <circle cx="100" cy="10" r="8" fill="currentColor" opacity="0.6"/>
+            <path d="M70 60 L100 30 L130 60" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.7"/>
+            <path d="M30 90 C50 83 70 80 100 80 C130 80 150 83 170 90" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.5"/>
+          </svg>
+        </div>
+        <h1 class="hero-title">Ontario Speed Skating<br/><span>Analytics Dashboard</span></h1>
+        <p class="hero-sub">Select your filters and load rankings to explore athlete performance data, compare skaters, and uncover insights.</p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num">6</div>
+            <div class="hero-stat-label">Age Categories</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">2</div>
+            <div class="hero-stat-label">Seasons</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">4</div>
+            <div class="hero-stat-label">Max Compare</div>
+          </div>
+        </div>
+        <button class="load-btn hero-load-btn" onclick="document.getElementById('loadBtn').click()">
+          <i class="bi bi-lightning-fill"></i>
+          Load Rankings Now
+        </button>
+      </div>
+    </section>
+
+    <!-- Rankings Section (hidden until data loads) -->
+    <section id="rankingsSection" style="display:none">
+
+      <!-- Data source banner -->
+      <div class="data-banner" id="dataBanner"></div>
+
+      <!-- Stats Strip -->
+      <div class="stats-strip" id="statsStrip"></div>
+
+      <!-- Search Bar -->
+      <div class="search-bar-wrap">
+        <div class="search-bar">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Search athlete name or club…" autocomplete="off" />
+          <kbd class="search-kbd">⌘K</kbd>
+        </div>
+        <div class="table-actions">
+          <span class="results-count" id="resultsCount"></span>
+        </div>
+      </div>
+
+      <!-- Rankings Table -->
+      <div class="table-wrap">
+        <table class="rankings-table" id="rankingsTable">
+          <thead>
+            <tr>
+              <th class="th-check"></th>
+              <th class="sortable" data-col="rank">Rank <i class="bi bi-chevron-expand"></i></th>
+              <th class="sortable" data-col="name">Athlete <i class="bi bi-chevron-expand"></i></th>
+              <th class="sortable" data-col="club">Club <i class="bi bi-chevron-expand"></i></th>
+              <th class="sortable" data-col="bestTime">Best Time <i class="bi bi-chevron-expand"></i></th>
+              <th class="sortable" data-col="avgTime">Avg Time <i class="bi bi-chevron-expand"></i></th>
+              <th>vs Leader</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rankingsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-wrap">
+        <div class="page-info" id="pageInfo"></div>
+        <div class="page-controls">
+          <button class="page-btn" id="prevPage"><i class="bi bi-chevron-left"></i></button>
+          <div class="page-nums" id="pageNums"></div>
+          <button class="page-btn" id="nextPage"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Section (hidden until triggered) -->
+    <section id="comparisonSection" style="display:none">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Athlete Comparison</h2>
+          <p class="section-sub" id="comparisonSubtitle"></p>
+        </div>
+        <button class="back-btn" id="backBtn">
+          <i class="bi bi-arrow-left"></i>
+          Back to Rankings
+        </button>
+      </div>
+
+      <!-- KPI Cards -->
+      <div id="kpiGrid" class="kpi-grid"></div>
+
+      <!-- Charts Row -->
+      <div class="charts-grid">
+        <!-- Line Chart: Performance Trend -->
+        <div class="chart-card chart-wide">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Performance Trend</div>
+              <div class="chart-sub">Time history across recorded races</div>
+            </div>
+            <div class="chart-legend" id="lineLegend"></div>
+          </div>
+          <div class="chart-body">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart: Best Times -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Best Time Comparison</div>
+              <div class="chart-sub">Personal best race times</div>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Skill Radar</div>
+              <div class="chart-sub">Multi-dimensional performance profile</div>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Head-to-Head Table -->
+      <div class="h2h-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Head-to-Head Comparison</div>
+            <div class="chart-sub">Side-by-side statistics for all selected athletes</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="h2h-table" id="h2hTable"></table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none">
+  <div class="loading-inner">
+    <div class="loading-spinner">
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring ring2"></div>
+    </div>
+    <div class="loading-text">Fetching Rankings…</div>
+    <div class="loading-sub" id="loadingSub">Connecting to Ontario Speed Skating</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
