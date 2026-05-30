@@ -28,6 +28,7 @@ const state = {
   age: 'youth',
   gender: 'male',
   track: '100m',
+  distance: '400',
   season: '2025-2026',
 
   // Data
