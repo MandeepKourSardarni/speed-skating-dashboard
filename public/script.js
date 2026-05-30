@@ -73,9 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ─── FILTER SETUP ──────────────────────────────────────────────── */
 function setupFilters() {
-  setupPillGroup('ageFilter',    v => { state.age    = v; });
-  setupPillGroup('genderFilter', v => { state.gender = v; });
-  setupPillGroup('seasonFilter', v => { state.season = v; });
+  setupPillGroup('ageFilter',      v => { state.age      = v; });
+  setupPillGroup('genderFilter',   v => { state.gender   = v; });
+  setupPillGroup('distanceFilter', v => { state.distance = v; });
+  setupPillGroup('seasonFilter',   v => { state.season   = v; });
 
   $('loadBtn').addEventListener('click', loadRankings);
 }
