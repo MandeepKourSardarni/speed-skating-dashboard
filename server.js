@@ -46,13 +46,13 @@ const GENDER_MAP = {
 // ─── Proxy endpoint: /api/rankings ─────────────────────────────────────────
 // Query params: age, gender, track, season
 app.get('/api/rankings', async (req, res) => {
-  const { age = 'youth', gender = 'male', track = '100m', season = '2025-2026' } = req.query;
+  const { age = 'youth', gender = 'male', track = '100m', distance = '400', season = '2025-2026' } = req.query;
 
   const BASE_URL = 'https://results.ontariospeedskating.ca';
 
   // Build the URL that the Next.js site uses internally for data
   // The site uses Next.js API routes for its ranking data
-  const apiUrl = `${BASE_URL}/api/rankings?age=${encodeURIComponent(age)}&gender=${encodeURIComponent(gender)}&track=${encodeURIComponent(track)}&season=${encodeURIComponent(season)}`;
+  const apiUrl = `${BASE_URL}/api/rankings?age=${encodeURIComponent(age)}&gender=${encodeURIComponent(gender)}&track=${encodeURIComponent(track)}&distance=${encodeURIComponent(distance)}&season=${encodeURIComponent(season)}`;
 
   try {
     // First try the internal API endpoint
